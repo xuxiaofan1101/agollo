@@ -5,12 +5,12 @@ import (
 	"testing"
 )
 
-// TestParser_ParseCamelCase 测试解析包含小驼峰法key的YAML
-func TestParser_ParseCamelCase(t *testing.T) {
+// TestParser_ParseAndGetNestedValue 测试解析YAML并获取嵌套值
+func TestParser_ParseAndGetNestedValue(t *testing.T) {
 	// 初始化解析器
 	parser := &Parser{}
 
-	// 定义一个包含小驼峰法key的YAML字符串
+	// 定义一个YAML字符串，包含嵌套的配置项
 	yamlContent := `
 appConfig:
   appName: TestApp
@@ -29,21 +29,24 @@ loggerConfig:
 	// 确保解析没有错误
 	assert.NoError(t, err, "解析YAML时出错")
 
-	// 验证 appConfig 的解析结果
-	appConfig, ok := result["appConfig"].(map[interface{}]interface{})
-	assert.True(t, ok, "appConfig 应该是一个 map")
-	assert.Equal(t, "TestApp", appConfig["appName"], "appName 不匹配")
-	assert.Equal(t, 1.0, appConfig["appVersion"], "appVersion 不匹配")
+	// 验证 appConfig 的嵌套值
+	appName := getNestedValue(result, "appConfig.appName")
+	assert.Equal(t, "TestApp", appName, "appName 不匹配")
 
-	// 验证 serverConfig 的解析结果
-	serverConfig, ok := result["serverConfig"].(map[interface{}]interface{})
-	assert.True(t, ok, "serverConfig 应该是一个 map")
-	assert.Equal(t, true, serverConfig["enableSsl"], "enableSsl 不匹配")
-	assert.Equal(t, 100, serverConfig["maxConnections"], "maxConnections 不匹配")
+	appVersion := getNestedValue(result, "appConfig.appVersion")
+	assert.Equal(t, 1.0, appVersion, "appVersion 不匹配")
 
-	// 验证 loggerConfig 的解析结果
-	loggerConfig, ok := result["loggerConfig"].(map[interface{}]interface{})
-	assert.True(t, ok, "loggerConfig 应该是一个 map")
-	assert.Equal(t, "debug", loggerConfig["logLevel"], "logLevel 不匹配")
-	assert.Equal(t, "/var/log/test.log", loggerConfig["logOutput"], "logOutput 不匹配")
+	// 验证 serverConfig 的嵌套值
+	enableSsl := getNestedValue(result, "serverConfig.enableSsl")
+	assert.Equal(t, true, enableSsl, "enableSsl 不匹配")
+
+	maxConnections := getNestedValue(result, "serverConfig.maxConnections")
+	assert.Equal(t, 100, maxConnections, "maxConnections 不匹配")
+
+	// 验证 loggerConfig 的嵌套值
+	logLevel := getNestedValue(result, "loggerConfig.logLevel")
+	assert.Equal(t, "debug", logLevel, "logLevel 不匹配")
+
+	logOutput := getNestedValue(result, "loggerConfig.logOutput")
+	assert.Equal(t, "/var/log/test.log", logOutput, "logOutput 不匹配")
 }

@@ -20,13 +20,13 @@ package yaml
 import (
 	"github.com/xuxiaofan1101/agollo/v4/utils"
 	"gopkg.in/yaml.v2"
+	"strings"
 )
 
 // Parser properties转换器
 type Parser struct {
 }
 
-// Parse 内存内容 => yml文件转换器
 func (d *Parser) Parse(configContent interface{}) (map[string]interface{}, error) {
 	content, ok := configContent.(string)
 	if !ok {
@@ -36,7 +36,7 @@ func (d *Parser) Parse(configContent interface{}) (map[string]interface{}, error
 		return nil, nil
 	}
 
-	var result map[string]interface{}
+	var result map[interface{}]interface{}
 
 	// 使用 yaml.v2 进行解析
 	err := yaml.Unmarshal([]byte(content), &result)
@@ -44,5 +44,35 @@ func (d *Parser) Parse(configContent interface{}) (map[string]interface{}, error
 		return nil, err
 	}
 
-	return result, nil
+	// 将 map[interface{}]interface{} 转换为 map[string]interface{}
+	return convertToStringKeyMap(result), nil
+}
+
+// 递归将 map[interface{}]interface{} 转换为 map[string]interface{}
+func convertToStringKeyMap(input map[interface{}]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+	for key, value := range input {
+		strKey := key.(string) // 假设键是字符串类型
+		switch v := value.(type) {
+		case map[interface{}]interface{}:
+			result[strKey] = convertToStringKeyMap(v)
+		default:
+			result[strKey] = v
+		}
+	}
+	return result
+}
+
+// 递归获取嵌套值的函数
+func getNestedValue(data map[string]interface{}, key string) interface{} {
+	keys := strings.Split(key, ".")
+	var result interface{} = data
+	for _, k := range keys {
+		if m, ok := result.(map[string]interface{}); ok {
+			result = m[k]
+		} else {
+			return nil
+		}
+	}
+	return result
 }
